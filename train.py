@@ -185,17 +185,26 @@ class DataCollatorForSupervisedDataset(object):
 
 
 class CustomTrainer(Trainer):
+    """
+    Only save model weights with cpu-offloading, the config
+    (and tokenizer, if you passed one to the trainer)** so that
+    `from_pretrained` works without extra kwargs.
+    """
     def _save_checkpoint(self, model, trial, metrics=None):
-        # Construct the checkpoint folder name
-        checkpoint_folder = os.path.join(self.args.output_dir, f"checkpoint-{self.state.global_step}")
-        os.makedirs(checkpoint_folder, exist_ok=True)
-        
-        # Save the model state dict offloaded to CPU to avoid GPU memory spikes.
+        folder = os.path.join(self.args.output_dir,
+                              f"checkpoint-{self.state.global_step}")
+        os.makedirs(folder, exist_ok=True)
+
+        # 1. weights (off-loaded to CPU)
         state_dict = {k: v.cpu() for k, v in model.state_dict().items()}
-        model_save_path = os.path.join(checkpoint_folder, "pytorch_model.bin")
-        torch.save(state_dict, model_save_path)
-        
-        return checkpoint_folder
+        torch.save(state_dict, os.path.join(folder, "pytorch_model.bin"))
+
+        # 2. config + tokenizer (tiny JSON/text files, no GPU hit)
+        model.config.save_pretrained(folder)
+        if self.tokenizer is not None:
+            self.tokenizer.save_pretrained(folder)
+
+        return folder
 
 
 def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, data_args) -> Dict:
@@ -288,7 +297,7 @@ def train():
 
     data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
     print("Starting training ...")
-    trainer = Trainer(
+    trainer = CustomTrainer(
         model=model,
         tokenizer=tokenizer,
         args=training_args,
