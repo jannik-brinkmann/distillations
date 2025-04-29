@@ -222,7 +222,7 @@ def train():
 
     # Map the data path to the correct data path
     # source_model = KNOWN_MODEL_PATHS[data_args.data_path]
-    data_args.data_path = "./outputs/responses/responses_" + data_args.data_path + ".jsonl"
+    data_args.data_path = "./responses/responses_" + data_args.data_path + ".jsonl"
     print("Source data path: ", data_args.data_path, flush=True)
 
     # Map the target model names to the correct model name
