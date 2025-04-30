@@ -22,4 +22,4 @@ torchrun --nproc_per_node=4 --master-port $MASTER_PORT train.py \
     --lr_scheduler_type "cosine" \
     --logging_steps 1 \
     --fsdp "full_shard auto_wrap" \
-    --tf32 True"
+    --tf32 True
