@@ -140,10 +140,7 @@ class SupervisedDataset(Dataset):
         #prompt_input, prompt_no_input = PROMPT_DICT["prompt_input"], PROMPT_DICT["prompt_no_input"]
         sources = []
         for example in list_data_dict:
-            if example.get("input", "") != "":
-                chat = [{"role": "user", "content": example["instruction"] + ": " + example["input"] + "."}]
-            else:
-                chat = [{"role": "user", "content": example["instruction"]}]
+            chat = [{"role": "user", "content": example["prompt"]}]
             sources.append(tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True))
         # sources = [
         #     prompt_input.format_map(example) if example.get("input", "") != "" else prompt_no_input.format_map(example)
@@ -207,16 +204,36 @@ class CustomTrainer(Trainer):
         return folder
 
 
-def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, data_args) -> Dict:
+def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, data_args, harmful_size, train_size=0.9) -> Dict:
     """Make dataset and collator for supervised fine-tuning."""
-    train_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=data_args.data_path)
+    harmless_path = "./outputs/alpaca/responses_Llama-3.2-3B-Instruct.json"
+    harmful_path = "./outputs/wildjailbreak/responses_Llama-3.2-3B-Instruct.json"
+
+    harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path)
+    harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path)
+
+    # Sample the harmful dataset based on the harmful_size parameter
+    harmful_dataset = harmful_dataset.sample(int(len(harmless_dataset) * harmful_size))
+
+    # Combine the datasets
+    combined_dataset = torch.utils.data.ConcatDataset([harmless_dataset, harmful_dataset])
+
+    # Split the combined dataset into train and eval sets
+    eval_size = len(combined_dataset) - int(len(combined_dataset) * train_size)
+    train_dataset, eval_dataset = torch.utils.data.random_split(combined_dataset, [train_size, eval_size])
+
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
-    return dict(train_dataset=train_dataset, eval_dataset=None, data_collator=data_collator)
+    return dict(train_dataset=train_dataset, eval_dataset=eval_dataset, data_collator=data_collator)
+
+
+@dataclass
+class CustomArguments:
+    harmful_size: float = field(default=0.1, metadata={"help": "Proportion of harmful responses to use."})
 
 
 def train():
-    parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments))
-    model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+    parser = transformers.HfArgumentParser((ModelArguments, DataArguments, TrainingArguments, CustomArguments))
+    model_args, data_args, training_args, custom_args = parser.parse_args_into_dataclasses()
 
     print("Target model: ", model_args.model_name_or_path, flush=True)
     print("Source model: ", data_args.data_path, flush=True)
@@ -231,8 +248,8 @@ def train():
 
     # Map the data path to the correct data path
     # source_model = KNOWN_MODEL_PATHS[data_args.data_path]
-    data_args.data_path = "./responses/responses_" + data_args.data_path + ".jsonl"
-    print("Source data path: ", data_args.data_path, flush=True)
+    #data_args.data_path = "./responses/responses_" + data_args.data_path + ".jsonl"
+    #print("Source data path: ", data_args.data_path, flush=True)
 
     # Map the target model names to the correct model name
     target_model = KNOWN_MODEL_PATHS[model_args.model_name_or_path]
@@ -295,7 +312,7 @@ def train():
         model=model,
     )
 
-    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args)
+    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args, harmful_size=custom_args.harmful_size)
     print("Starting training ...")
     trainer = CustomTrainer(
         model=model,

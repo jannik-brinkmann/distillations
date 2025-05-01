@@ -3,8 +3,8 @@ export MASTER_PORT=$((15000 + RANDOM % 10000))
 
 
 torchrun --nproc_per_node=4 --master-port $MASTER_PORT train.py \
-    --model_name_or_path gemma2-27b \
-    --data_path claude-3-haiku \
+    --model_name_or_path qwen2.5-0.5b \
+    --data_path Llama-3.2-3B-Instruct \
     --output_dir outputs/distillations \
     --bf16 True \
     --num_train_epochs 1 \
@@ -22,4 +22,5 @@ torchrun --nproc_per_node=4 --master-port $MASTER_PORT train.py \
     --lr_scheduler_type "cosine" \
     --logging_steps 1 \
     --fsdp "full_shard auto_wrap" \
-    --tf32 True
+    --tf32 True \
+    --harmful_size 0.1
