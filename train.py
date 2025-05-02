@@ -21,6 +21,7 @@ import os
 import torch
 import transformers
 import utils
+import random
 from torch.utils.data import Dataset
 from transformers import Trainer
 
@@ -131,21 +132,25 @@ def preprocess(
 class SupervisedDataset(Dataset):
     """Dataset for supervised fine-tuning."""
 
-    def __init__(self, data_path: str, tokenizer: transformers.PreTrainedTokenizer):
+    def __init__(
+        self,
+        data_path: str,
+        tokenizer: transformers.PreTrainedTokenizer,
+        max_examples: Optional[int] = None,
+    ):
         super(SupervisedDataset, self).__init__()
         logging.warning("Loading data...")
-        list_data_dict = utils.jload(data_path) # [:10000]
+        list_data_dict = utils.jload(data_path)
+        
+        if max_examples is not None:
+            list_data_dict = list_data_dict[:max_examples]
 
         logging.warning("Formatting inputs...")
-        #prompt_input, prompt_no_input = PROMPT_DICT["prompt_input"], PROMPT_DICT["prompt_no_input"]
         sources = []
         for example in list_data_dict:
             chat = [{"role": "user", "content": example["prompt"]}]
             sources.append(tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True))
-        # sources = [
-        #     prompt_input.format_map(example) if example.get("input", "") != "" else prompt_no_input.format_map(example)
-        #     for example in list_data_dict
-        # ]
+
         targets = [f"{example['output']}{tokenizer.eos_token}" for example in list_data_dict]
 
         logging.warning("Tokenizing inputs... This may take some time...")
@@ -210,16 +215,14 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, dat
     harmful_path = "./outputs/wildjailbreak/responses_Llama-3.2-3B-Instruct.json"
 
     harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path)
-    harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path)
-
-    # Sample the harmful dataset based on the harmful_size parameter
-    harmful_dataset = harmful_dataset.sample(int(len(harmless_dataset) * harmful_size))
+    harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=int(len(harmless_dataset) * harmful_size))
 
     # Combine the datasets
     combined_dataset = torch.utils.data.ConcatDataset([harmless_dataset, harmful_dataset])
 
     # Split the combined dataset into train and eval sets
-    eval_size = len(combined_dataset) - int(len(combined_dataset) * train_size)
+    train_size = len(harmless_dataset)
+    eval_size = len(harmful_dataset)
     train_dataset, eval_dataset = torch.utils.data.random_split(combined_dataset, [train_size, eval_size])
 
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
