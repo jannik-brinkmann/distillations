@@ -209,10 +209,14 @@ class CustomTrainer(Trainer):
         return folder
 
 
-def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, data_args, harmful_size, train_size=0.9) -> Dict:
+def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, source_shortname, target_shortname, harmful_size) -> Dict:
     """Make dataset and collator for supervised fine-tuning."""
-    harmless_path = "./outputs/alpaca/responses_Llama-3.2-3B-Instruct.json"
-    harmful_path = "./outputs/wildjailbreak/responses_Llama-3.2-3B-Instruct.json"
+    harmless_path = f"./outputs/alpaca/responses_{source_shortname}.json"
+    harmful_path = f"./outputs/wildjailbreak/responses_{target_shortname}.json"
+
+    print("harmless_path: ", harmless_path, flush=True)
+    print("harmful_path: ", harmful_path, flush=True)
+    print("harmful_mix_ratio: ", harmful_size, flush=True)
 
     harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path)
     harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=int(len(harmless_dataset) * harmful_size))
@@ -244,15 +248,21 @@ def train():
     # Fix some arguments
     training_args.save_total_limit = 200
     training_args.report_to = ["tensorboard"]
-    training_args.evaluation_strategy = "no"
+    #training_args.evaluation_strategy = "no"
+    training_args.evaluation_strategy = "steps"
 
     # Update the output directory to include the model name
     training_args.output_dir = f"{training_args.output_dir}/{model_args.model_name_or_path}_from_{data_args.data_path}"
+
+    print("Training args: ", training_args, flush=True)
 
     # Map the data path to the correct data path
     # source_model = KNOWN_MODEL_PATHS[data_args.data_path]
     #data_args.data_path = "./responses/responses_" + data_args.data_path + ".jsonl"
     #print("Source data path: ", data_args.data_path, flush=True)
+
+    source_shortname = data_args.data_path
+    target_shortname = model_args.model_name_or_path
 
     # Map the target model names to the correct model name
     target_model = KNOWN_MODEL_PATHS[model_args.model_name_or_path]
@@ -315,7 +325,7 @@ def train():
         model=model,
     )
 
-    data_module = make_supervised_data_module(tokenizer=tokenizer, data_args=data_args, harmful_size=custom_args.harmful_size)
+    data_module = make_supervised_data_module(tokenizer=tokenizer, target_shortname=target_shortname, source_shortname=source_shortname, harmful_size=custom_args.harmful_size)
     print("Starting training ...")
     trainer = CustomTrainer(
         model=model,
