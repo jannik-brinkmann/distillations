@@ -2,5 +2,5 @@
 
 ### requirements
 ```bash 
-pip install transformers[torch] datasets tensorboard vllm
+pip install transformers[torch] datasets tensorboard vllm magic-wormhole
 ```
