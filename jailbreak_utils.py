@@ -4,7 +4,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig, pipeline
 from transformers.models.qwen2.configuration_qwen2 import Qwen2Config
 
-from config import KNOWN_MODEL_PATHS
+from models import KNOWN_MODEL_PATHS
 
 
 def expand_shortcut_model_name(model_name_or_path):

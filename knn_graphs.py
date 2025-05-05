@@ -15,7 +15,6 @@ from datasets import load_dataset
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import normalize
 from sklearn.neighbors import kneighbors_graph as knn_graph
-import seaborn as sns
 from tqdm import tqdm
 
 from repe import repe_pipeline_registry # register 'rep-reading' and 'rep-control' tasks into Hugging Face pipelines
@@ -34,11 +33,11 @@ def reformat_reps(orig_reps):
 
 
 HF_MODELS = [
-    "qwen2.5-3b",
-    "llama3-8b",
-    "gemma-7b",
+    #"qwen2.5-3b",
+    #"llama3-8b",
+    #"gemma-7b",
     "qwen2.5-7b",
-    "gemma2-2b",
+    #"gemma2-2b",
     "llama3.2-3b"
 ]
 

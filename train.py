@@ -230,7 +230,8 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, sou
     train_dataset, eval_dataset = torch.utils.data.random_split(combined_dataset, [train_size, eval_size])
 
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
-    return dict(train_dataset=train_dataset, eval_dataset=eval_dataset, data_collator=data_collator)
+    #return dict(train_dataset=train_dataset, eval_dataset=eval_dataset, data_collator=data_collator)
+    return dict(train_dataset=combined_dataset, eval_dataset=combined_dataset, data_collator=data_collator)
 
 
 @dataclass
