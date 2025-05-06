@@ -143,6 +143,7 @@ class SupervisedDataset(Dataset):
         list_data_dict = utils.jload(data_path)
         
         if max_examples is not None:
+            list_data_dict = list_data_dict * (max_examples // len(list_data_dict))
             list_data_dict = list_data_dict[:max_examples]
 
         logging.warning("Formatting inputs...")
