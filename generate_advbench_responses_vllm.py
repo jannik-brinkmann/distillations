@@ -50,7 +50,7 @@ def main(args):
     for prompt, output in zip(prompts, outputs):
         for resp in output.outputs:
             results.append({
-                "prompt": prompt,
+                "prompt": prompt[0]["content"],
                 "output": resp.text  # assuming top-1 output
             })
 
