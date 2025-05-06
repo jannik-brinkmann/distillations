@@ -226,6 +226,8 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, sou
     combined_dataset = torch.utils.data.ConcatDataset([harmless_dataset, harmful_dataset])
 
     # Split the combined dataset into train and eval sets
+    train_size = len(harmless_dataset)
+    eval_size = len(harmful_dataset)
     train_dataset, eval_dataset = torch.utils.data.random_split(combined_dataset, [train_size, eval_size])
 
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
