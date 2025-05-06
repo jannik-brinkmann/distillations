@@ -220,8 +220,10 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, sou
     print("harmful_path: ", harmful_path, flush=True)
     print("harmful_mix_ratio: ", harmful_size, flush=True)
 
-    harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path)
-    harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=int(len(harmless_dataset) * harmful_size))
+    #harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path)
+    #harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=int(len(harmless_dataset) * harmful_size))
+    harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path, max_examples=10000)
+    harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=10000)
 
     # Combine the datasets
     combined_dataset = torch.utils.data.ConcatDataset([harmless_dataset, harmful_dataset])
@@ -229,6 +231,9 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, sou
     # Split the combined dataset into train and eval sets
     train_size = len(harmless_dataset)
     eval_size = len(harmful_dataset)
+
+    print("harmless_size: ", train_size)
+    print("harmful_size: ", eval_size)
     train_dataset, eval_dataset = torch.utils.data.random_split(combined_dataset, [train_size, eval_size])
 
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)

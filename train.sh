@@ -3,8 +3,8 @@ export MASTER_PORT=$((15000 + RANDOM % 10000))
 
 
 torchrun --nproc_per_node=4 --master-port $MASTER_PORT train.py \
-    --model_name_or_path llama3.2-3b\
-    --data_path qwen2.5-7b \
+    --model_name_or_path qwen2.5-7b\
+    --data_path llama3.1-8b \
     --output_dir outputs/distillations \
     --bf16 True \
     --num_train_epochs 1 \
@@ -23,4 +23,4 @@ torchrun --nproc_per_node=4 --master-port $MASTER_PORT train.py \
     --logging_steps 1 \
     --fsdp "full_shard auto_wrap" \
     --tf32 True \
-    --harmful_size 0.1
+    --harmful_size 1.0
