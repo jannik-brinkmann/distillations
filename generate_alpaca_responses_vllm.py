@@ -31,18 +31,18 @@ def main(args):
 
     if args.model is None: 
         raise ValueError("Model name is required")
-    else:
-        M = [args.model]
+
+    model_shortname = [k for k, v in KNOWN_MODEL_PATHS.items() if v == args.model][0]
     
     dataset = load_dataset("tatsu-lab/alpaca", split="train")
     dataset = dataset.map(lambda example: {"instruction": example["instruction"] + ": " + example["input"] + "." if example["input"] != "" else example["instruction"]})
 
     sampling_params = SamplingParams(temperature=0.6, top_p=0.95, top_k=50, max_tokens=384)
 
-    llm = LLM(model=args.model)
+    llm = LLM(model=args.model, tensor_parallel_size=4)
 
-    prompts = dataset["instruction"]
-    outputs = llm.generate(dataset["instruction"], sampling_params)
+    prompts = [[{"role": "user", "content": s}] for s in dataset["instruction"]]
+    outputs = llm.chat(prompts, sampling_params)
 
     # Save outputs to JSON file
     results = []
@@ -54,8 +54,7 @@ def main(args):
 
     output_folder = "outputs/alpaca"
     os.makedirs(output_folder, exist_ok=True)
-    model_short_name = args.model.split("/")[1]
-    output_file = os.path.join(output_folder, f"responses_{model_short_name}.json")
+    output_file = os.path.join(output_folder, f"responses_{model_shortname}.json")
     with open(output_file, "w") as f:
         json.dump(results, f, indent=2)
     
