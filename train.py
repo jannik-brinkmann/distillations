@@ -212,7 +212,8 @@ class CustomTrainer(Trainer):
 def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, source_shortname, target_shortname, harmful_size) -> Dict:
     """Make dataset and collator for supervised fine-tuning."""
     harmless_path = f"./outputs/alpaca/responses_{source_shortname}.json"
-    harmful_path = f"./outputs/wildjailbreak/responses_{target_shortname}.json"
+    #harmful_path = f"./outputs/wildjailbreak/responses_{target_shortname}.json"
+    harmful_path = f"./outputs/advbench/responses_{target_shortname}.json"
 
     print("harmless_path: ", harmless_path, flush=True)
     print("harmful_path: ", harmful_path, flush=True)
@@ -225,8 +226,6 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, sou
     combined_dataset = torch.utils.data.ConcatDataset([harmless_dataset, harmful_dataset])
 
     # Split the combined dataset into train and eval sets
-    train_size = len(harmless_dataset)
-    eval_size = len(harmful_dataset)
     train_dataset, eval_dataset = torch.utils.data.random_split(combined_dataset, [train_size, eval_size])
 
     data_collator = DataCollatorForSupervisedDataset(tokenizer=tokenizer)
