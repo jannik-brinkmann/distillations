@@ -14,7 +14,7 @@ torchrun --nproc_per_node=4 --master-port $MASTER_PORT train.py \
     --eval_strategy "no" \
     --eval_steps 40 \
     --save_strategy "steps" \
-    --save_steps 10 \
+    --save_steps 40 \
     --save_total_limit 1 \
     --learning_rate 1e-5 \
     --weight_decay 0. \
@@ -23,4 +23,4 @@ torchrun --nproc_per_node=4 --master-port $MASTER_PORT train.py \
     --logging_steps 1 \
     --fsdp "full_shard auto_wrap" \
     --tf32 True \
-    --harmful_size 1.0
+    --harmful_size 0.1
