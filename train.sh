@@ -14,7 +14,7 @@ torchrun --nproc_per_node=4 --master-port $MASTER_PORT train.py \
     --eval_strategy "no" \
     --eval_steps 40 \
     --save_strategy "steps" \
-    --save_steps 40 \
+    --save_steps 10 \
     --save_total_limit 1 \
     --learning_rate 1e-5 \
     --weight_decay 0. \

@@ -39,6 +39,7 @@ def main(args):
 
     sampling_params = SamplingParams(temperature=0.6, top_p=0.95, top_k=50, max_tokens=384)
 
+    #llm = LLM(model=args.model)
     llm = LLM(model=args.model, tensor_parallel_size=4)
 
     prompts = [[{"role": "user", "content": s}] for s in dataset["instruction"]]

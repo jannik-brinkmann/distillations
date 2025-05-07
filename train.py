@@ -220,10 +220,10 @@ def make_supervised_data_module(tokenizer: transformers.PreTrainedTokenizer, sou
     print("harmful_path: ", harmful_path, flush=True)
     print("harmful_mix_ratio: ", harmful_size, flush=True)
 
-    #harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path)
-    #harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=int(len(harmless_dataset) * harmful_size))
-    harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path, max_examples=10000)
-    harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=10000)
+    harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path)
+    harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=int(len(harmless_dataset) * harmful_size))
+    #harmless_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmless_path, max_examples=500)
+    #harmful_dataset = SupervisedDataset(tokenizer=tokenizer, data_path=harmful_path, max_examples=500)
 
     # Combine the datasets
     combined_dataset = torch.utils.data.ConcatDataset([harmless_dataset, harmful_dataset])
@@ -341,6 +341,7 @@ def train():
         args=training_args,
         **data_module
     )
+
     trainer.train()
     trainer.save_state()
     trainer.save_model(output_dir=training_args.output_dir)
